@@ -574,7 +574,7 @@ enum TokeniserState {
                     break;
                 case nullChar:
                     t.error(this);
-                    t.tagPending.newAttribute();
+                    t.tagPending.newAttribute(r.pos());
                     r.unconsume();
                     t.transition(AttributeName);
                     break;
@@ -586,12 +586,12 @@ enum TokeniserState {
                 case '\'':
                 case '=':
                     t.error(this);
-                    t.tagPending.newAttribute();
-                    t.tagPending.appendAttributeName(c);
+                    t.tagPending.newAttribute(r.pos()-1);
+                    t.tagPending.appendAttributeName(c, r.pos()-1);
                     t.transition(AttributeName);
                     break;
                 default: // A-Z, anything else
-                    t.tagPending.newAttribute();
+                    t.tagPending.newAttribute(r.pos()-1);
                     r.unconsume();
                     t.transition(AttributeName);
             }
@@ -600,8 +600,9 @@ enum TokeniserState {
     AttributeName {
         // from before attribute name
         void read(Tokeniser t, CharacterReader r) {
+        		int pos = r.pos();
             String name = r.consumeToAnySorted(attributeNameCharsSorted);
-            t.tagPending.appendAttributeName(name);
+            t.tagPending.appendAttributeName(name, pos);
 
             char c = r.consume();
             switch (c) {
@@ -624,7 +625,7 @@ enum TokeniserState {
                     break;
                 case nullChar:
                     t.error(this);
-                    t.tagPending.appendAttributeName(replacementChar);
+                    t.tagPending.appendAttributeName(replacementChar, r.pos());
                     break;
                 case eof:
                     t.eofError(this);
@@ -634,10 +635,10 @@ enum TokeniserState {
                 case '\'':
                 case '<':
                     t.error(this);
-                    t.tagPending.appendAttributeName(c);
+                    t.tagPending.appendAttributeName(c, r.pos());
                     break;
                 default: // buffer underrun
-                    t.tagPending.appendAttributeName(c);
+                    t.tagPending.appendAttributeName(c, r.pos());
             }
         }
     },
@@ -664,7 +665,7 @@ enum TokeniserState {
                     break;
                 case nullChar:
                     t.error(this);
-                    t.tagPending.appendAttributeName(replacementChar);
+                    t.tagPending.appendAttributeName(replacementChar, r.pos());
                     t.transition(AttributeName);
                     break;
                 case eof:
@@ -675,12 +676,12 @@ enum TokeniserState {
                 case '\'':
                 case '<':
                     t.error(this);
-                    t.tagPending.newAttribute();
-                    t.tagPending.appendAttributeName(c);
+                    t.tagPending.newAttribute(r.pos());
+                    t.tagPending.appendAttributeName(c, r.pos());
                     t.transition(AttributeName);
                     break;
                 default: // A-Z, anything else
-                    t.tagPending.newAttribute();
+                    t.tagPending.newAttribute(r.pos());
                     r.unconsume();
                     t.transition(AttributeName);
             }

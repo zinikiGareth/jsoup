@@ -1,17 +1,6 @@
 package org.jsoup.nodes;
 
-import org.jsoup.helper.ChangeNotifyingArrayList;
-import org.jsoup.internal.StringUtil;
-import org.jsoup.helper.Validate;
-import org.jsoup.parser.ParseSettings;
-import org.jsoup.parser.Tag;
-import org.jsoup.select.Collector;
-import org.jsoup.select.Elements;
-import org.jsoup.select.Evaluator;
-import org.jsoup.select.NodeTraversor;
-import org.jsoup.select.NodeVisitor;
-import org.jsoup.select.QueryParser;
-import org.jsoup.select.Selector;
+import static org.jsoup.internal.Normalizer.normalize;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -26,7 +15,18 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static org.jsoup.internal.Normalizer.normalize;
+import org.jsoup.helper.ChangeNotifyingArrayList;
+import org.jsoup.helper.Validate;
+import org.jsoup.internal.StringUtil;
+import org.jsoup.parser.ParseSettings;
+import org.jsoup.parser.Tag;
+import org.jsoup.select.Collector;
+import org.jsoup.select.Elements;
+import org.jsoup.select.Evaluator;
+import org.jsoup.select.NodeTraversor;
+import org.jsoup.select.NodeVisitor;
+import org.jsoup.select.QueryParser;
+import org.jsoup.select.Selector;
 
 /**
  * A HTML element consists of a tag name, attributes, and child nodes (including text nodes and
@@ -44,6 +44,7 @@ public class Element extends Node {
     List<Node> childNodes;
     private Attributes attributes;
     private String baseUri;
+	private Range innerRange;
 
     /**
      * Create a new, standalone element.
@@ -153,6 +154,13 @@ public class Element extends Node {
         return tag;
     }
     
+    public void setInnerRange(Range range) {
+    		this.innerRange = range;
+    }
+    
+    public Range innerRange() {
+    		return innerRange;
+    }
     /**
      * Test if this element is a block-level element. (E.g. {@code <div> == true} or an inline element
      * {@code <p> == false}).

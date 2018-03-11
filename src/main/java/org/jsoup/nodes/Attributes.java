@@ -1,8 +1,6 @@
 package org.jsoup.nodes;
 
-import org.jsoup.SerializationException;
-import org.jsoup.internal.StringUtil;
-import org.jsoup.helper.Validate;
+import static org.jsoup.internal.Normalizer.lowerCase;
 
 import java.io.IOException;
 import java.util.AbstractMap;
@@ -15,7 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jsoup.internal.Normalizer.lowerCase;
+import org.jsoup.SerializationException;
+import org.jsoup.helper.Validate;
+import org.jsoup.internal.StringUtil;
+import org.jsoup.nodes.Node.Range;
 
 /**
  * The attributes of an Element.
@@ -37,12 +38,15 @@ public class Attributes implements Iterable<Attribute>, Cloneable {
     // manages the key/val arrays
     private static final int GrowthFactor = 2;
     private static final String[] Empty = {};
+    private static final int[] EmptyInts = {};
     static final int NotFound = -1;
     private static final String EmptyString = "";
 
     private int size = 0; // number of slots used (not capacity, which is keys.length
     String[] keys = Empty;
     String[] vals = Empty;
+	int[] froms = EmptyInts;
+	int[] tos = EmptyInts;
 
     // check there's room for more
     private void checkCapacity(int minNewSize) {
@@ -57,11 +61,20 @@ public class Attributes implements Iterable<Attribute>, Cloneable {
 
         keys = copyOf(keys, newSize);
         vals = copyOf(vals, newSize);
+        froms = copyOf(froms, newSize);
+        tos = copyOf(tos, newSize);
     }
 
     // simple implementation of Arrays.copy, for support of Android API 8.
     private static String[] copyOf(String[] orig, int size) {
         final String[] copy = new String[size];
+        System.arraycopy(orig, 0, copy, 0,
+                Math.min(orig.length, size));
+        return copy;
+    }
+
+    private static int[] copyOf(int[] orig, int size) {
+        final int[] copy = new int[size];
         System.arraycopy(orig, 0, copy, 0,
                 Math.min(orig.length, size));
         return copy;
@@ -112,10 +125,12 @@ public class Attributes implements Iterable<Attribute>, Cloneable {
     }
 
     // adds without checking if this key exists
-    private void add(String key, String value) {
+    private void add(String key, String value, int from, int to) {
         checkCapacity(size + 1);
         keys[size] = key;
         vals[size] = value;
+        froms[size] = from;
+        tos[size] = to;
         size++;
     }
 
@@ -126,23 +141,31 @@ public class Attributes implements Iterable<Attribute>, Cloneable {
      * @return these attributes, for chaining
      */
     public Attributes put(String key, String value) {
+    		return put(key, value, -1, -1);
+    }
+
+    public Attributes put(String key, String value, int from, int to) {
         int i = indexOfKey(key);
-        if (i != NotFound)
+        if (i != NotFound) {
             vals[i] = value;
-        else
-            add(key, value);
+            froms[i] = from;
+            tos[i] = to;
+        } else
+            add(key, value, from, to);
         return this;
     }
 
-    void putIgnoreCase(String key, String value) {
+    void putIgnoreCase(String key, String value, int from, int to) {
         int i = indexOfKeyIgnoreCase(key);
         if (i != NotFound) {
             vals[i] = value;
             if (!keys[i].equals(key)) // case changed, update
                 keys[i] = key;
+            froms[i] = from;
+            tos[i] = to;
         }
         else
-            add(key, value);
+            add(key, value, from, to);
     }
 
     /**
@@ -152,13 +175,17 @@ public class Attributes implements Iterable<Attribute>, Cloneable {
      * @return these attributes, for chaining
      */
     public Attributes put(String key, boolean value) {
+    		return put(key, value, -1, -1);
+    }
+
+    public Attributes put(String key, boolean value, int from, int to) {
         if (value)
-            putIgnoreCase(key, null);
+            putIgnoreCase(key, null, from, to);
         else
             remove(key);
         return this;
     }
-
+    
     /**
      Set a new attribute, or replace an existing one by key.
      @param attribute attribute with case sensitive key
@@ -258,6 +285,7 @@ public class Attributes implements Iterable<Attribute>, Cloneable {
             @Override
             public Attribute next() {
                 final Attribute attr = new Attribute(keys[i], vals[i], Attributes.this);
+                attr.setRange(new Range(froms[i], tos[i]));
                 i++;
                 return attr;
             }

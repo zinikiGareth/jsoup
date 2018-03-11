@@ -9,6 +9,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.FormElement;
 import org.jsoup.nodes.Node;
+import org.jsoup.nodes.Node.Range;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
@@ -199,6 +200,7 @@ public class HtmlTreeBuilder extends TreeBuilder {
         // when the spec expects an empty tag, will directly hit insertEmpty, so won't generate this fake end tag.
         if (startTag.isSelfClosing()) {
             Element el = insertEmpty(startTag);
+            el.setRange(new Range(startTag.startPos, startTag.endPos));
             stack.add(el);
             tokeniser.transition(TokeniserState.Data); // handles <script />, otherwise needs breakout steps from script data
             tokeniser.emit(emptyEnd.reset().name(el.tagName()));  // ensure we get out of whatever state we are in. emitted for yielded processing
@@ -206,6 +208,7 @@ public class HtmlTreeBuilder extends TreeBuilder {
         }
         
         Element el = new Element(Tag.valueOf(startTag.name(), settings), baseUri, settings.normalizeAttributes(startTag.attributes));
+        el.setRange(new Range(startTag.startPos, startTag.endPos));
         insert(el);
         return el;
     }
@@ -647,6 +650,8 @@ public class HtmlTreeBuilder extends TreeBuilder {
             // 8. create new element from element, 9 insert into current node, onto stack
             skip = false; // can only skip increment from 4.
             Element newEl = insertStartTag(entry.nodeName()); // todo: avoid fostering here?
+            newEl.setRange(entry.range());
+            newEl.setInnerRange(entry.innerRange());
             // newEl.namespace(entry.namespace()); // todo: namespaces
             newEl.attributes().addAll(entry.attributes());
 

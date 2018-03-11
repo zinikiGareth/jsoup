@@ -8,6 +8,7 @@ import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.BooleanAttribute;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node.Range;
 import org.jsoup.select.Elements;
 import org.junit.Test;
 
@@ -41,6 +42,32 @@ public class AttributeParseTest {
         assertEquals(2, el.attributes().size());
         assertEquals("bar\r\nqux", el.attr("foo")); // currently preserves newlines in quoted attributes. todo confirm if should.
         assertEquals("two", el.attr("bar"));
+
+        assertNotNull(el.range());
+        Range r = el.range();
+        assertEquals(0, r.from());
+        assertEquals(39, r.to());
+        assertNotNull(el.innerRange());
+        Range ir = el.innerRange();
+        assertEquals(32, ir.from());
+        assertEquals(35, ir.to());
+        assertEquals("One", html.substring(ir.from(), ir.to()));
+        
+        Attributes attrs = el.attributes();
+        for (Attribute a : attrs) {
+        		Range ar = a.range();
+        		assertNotNull(ar);
+        		if (a.getKey().equals("foo")) {
+        			assertEquals(4, ar.from());
+        			assertEquals(20, ar.to());
+        			assertEquals("foo='bar\r\nqux'\r\n", html.substring(ar.from(), ar.to()));
+        		}
+        		else if (a.getKey().equals("bar")) {
+        			assertEquals(20, ar.from());
+        			assertEquals(31, ar.to());
+        			assertEquals("bar\r\n=\r\ntwo", html.substring(ar.from(), ar.to()));
+        		}
+        }
     }
 
     @Test public void parsesEmptyString() {
@@ -89,6 +116,15 @@ public class AttributeParseTest {
 		assertFalse("'empty' attribute should not be boolean", attributes.get(2) instanceof BooleanAttribute);        
         
         assertEquals(html, el.outerHtml());
+        
+        assertNotNull(el.range());
+        Range r = el.range();
+        assertEquals(0, r.from());
+        assertEquals(37, r.to());
+        assertNotNull(el.innerRange());
+        Range ir = el.innerRange();
+        assertEquals(33, ir.from());
+        assertEquals(33, ir.to());
     }
     
     @Test public void dropsSlashFromAttributeName() {

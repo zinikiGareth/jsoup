@@ -105,7 +105,8 @@ public class TokeniserTest {
             sb.append("Quite a comment ");
         } while (sb.length() < maxBufferLen);
         String comment = sb.toString();
-        String html = "<p><!-- " + comment + " --></p>";
+        String ctext = "<!-- " + comment + " -->";
+        String html = "<p>" + ctext + "</p>";
 
         Document doc = Jsoup.parse(html);
         Elements els = doc.select("p");
@@ -115,6 +116,12 @@ public class TokeniserTest {
         assertNotNull(el);
         Comment child = (Comment) el.childNode(0);
         assertEquals(" " + comment + " ", child.getData());
+        
+        assertEquals(0, el.range().from());
+        assertEquals(3, el.innerRange().from());
+        assertEquals(32780, el.innerRange().to());
+        assertEquals(32784, el.range().to());
+        assertEquals(ctext, html.substring(el.innerRange().from(), el.innerRange().to()));
     }
 
     @Test public void handleLargeCdata() {

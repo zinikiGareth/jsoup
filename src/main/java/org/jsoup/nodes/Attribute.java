@@ -3,6 +3,7 @@ package org.jsoup.nodes;
 import org.jsoup.SerializationException;
 import org.jsoup.internal.StringUtil;
 import org.jsoup.helper.Validate;
+import org.jsoup.nodes.Node.Range;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -22,6 +23,7 @@ public class Attribute implements Map.Entry<String, String>, Cloneable  {
     private String key;
     private String val;
     Attributes parent; // used to update the holding Attributes when the key / value is changed via this interface
+	private Range range;
 
     /**
      * Create a new attribute from unencoded (raw) key and value.
@@ -93,6 +95,13 @@ public class Attribute implements Map.Entry<String, String>, Cloneable  {
         this.val = val;
         return oldVal;
     }
+
+    public void setRange(Range range) {
+    		this.range = range;
+    }
+	public Range range() {
+		return range;
+	}
 
     /**
      Get the HTML representation of this attribute; e.g. {@code href="index.html"}.

@@ -76,12 +76,15 @@ abstract class Token {
         protected String tagName;
         protected String normalName; // lc version of tag name, for case insensitive tree build
         private String pendingAttributeName; // attribute names are generally caught in one hop, not accumulated
+        private int pendingAttrStart;
         private StringBuilder pendingAttributeValue = new StringBuilder(); // but values are accumulated, from e.g. & in hrefs
         private String pendingAttributeValueS; // try to get attr vals in one shot, vs Builder
         private boolean hasEmptyAttributeValue = false; // distinguish boolean attribute from empty string value
         private boolean hasPendingAttributeValue = false;
         boolean selfClosing = false;
         Attributes attributes; // start tags get attributes on construction. End tags get attributes on first new attribute (but only for parser convenience, not used).
+        int startPos;
+		int endPos;
 
         @Override
         Tag reset() {
@@ -94,10 +97,18 @@ abstract class Token {
             hasPendingAttributeValue = false;
             selfClosing = false;
             attributes = null;
+            startPos = -1;
+            endPos = -1;
             return this;
         }
 
-        final void newAttribute() {
+		public Tag reset(int pos) {
+			reset();
+			startPos = pos;
+			return this;
+		}
+
+        final void newAttribute(int endPos) {
             if (attributes == null)
                 attributes = new Attributes();
 
@@ -112,7 +123,7 @@ abstract class Token {
                         value = "";
                     else
                         value = null;
-                    attributes.put(pendingAttributeName, value);
+                    attributes.put(pendingAttributeName, value, pendingAttrStart, endPos);
                 }
             }
             pendingAttributeName = null;
@@ -122,11 +133,12 @@ abstract class Token {
             pendingAttributeValueS = null;
         }
 
-        final void finaliseTag() {
+        final void finaliseTag(int pos) {
+        		this.endPos = pos;
             // finalises for emit
             if (pendingAttributeName != null) {
                 // todo: check if attribute name exists; if so, drop and error
-                newAttribute();
+                newAttribute(pos-1);
             }
         }
 
@@ -164,12 +176,16 @@ abstract class Token {
             appendTagName(String.valueOf(append));
         }
 
-        final void appendAttributeName(String append) {
-            pendingAttributeName = pendingAttributeName == null ? append : pendingAttributeName.concat(append);
+        final void appendAttributeName(String append, int pos) {
+        		if (pendingAttributeName == null) {
+        			this.pendingAttrStart = pos;
+        			pendingAttributeName = append;
+        		} else
+        			pendingAttributeName = pendingAttributeName.concat(append);
         }
 
-        final void appendAttributeName(char append) {
-            appendAttributeName(String.valueOf(append));
+        final void appendAttributeName(char append, int pos) {
+            appendAttributeName(String.valueOf(append), pos);
         }
 
         final void appendAttributeValue(String append) {
@@ -244,7 +260,8 @@ abstract class Token {
     }
 
     final static class EndTag extends Tag{
-        EndTag() {
+
+		EndTag() {
             super();
             type = TokenType.EndTag;
         }

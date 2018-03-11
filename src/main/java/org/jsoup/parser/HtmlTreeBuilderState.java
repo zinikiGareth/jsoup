@@ -7,6 +7,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.DocumentType;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
+import org.jsoup.nodes.Node.Range;
 
 import java.util.ArrayList;
 
@@ -595,6 +596,8 @@ enum HtmlTreeBuilderState {
                                 }
                             }
                             if (furthestBlock == null) {
+                            	   formatEl.setInnerRange(new Range(formatEl.range().to(), endTag.startPos-1));
+                            	   formatEl.setRange(new Range(formatEl.range().from(), endTag.endPos));
                                 tb.popStackToClose(formatEl.nodeName());
                                 tb.removeFromActiveFormattingElements(formatEl);
                                 return true;
@@ -710,6 +713,9 @@ enum HtmlTreeBuilderState {
                             tb.generateImpliedEndTags(name);
                             if (!tb.currentElement().nodeName().equals(name))
                                 tb.error(this);
+                            Element e = tb.currentElement();
+                            e.setInnerRange(new Range(e.range().to(), endTag.startPos-1));
+                            e.setRange(new Range(e.range().from(), endTag.endPos));
                             tb.popStackToClose(name);
                         }
                     } else if (StringUtil.inSorted(name, Constants.DdDt)) {

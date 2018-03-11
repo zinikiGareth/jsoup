@@ -3,6 +3,8 @@ package org.jsoup.nodes;
 import org.jsoup.SerializationException;
 import org.jsoup.internal.StringUtil;
 import org.jsoup.helper.Validate;
+import org.jsoup.nodes.Node.Range;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.NodeFilter;
 import org.jsoup.select.NodeTraversor;
 import org.jsoup.select.NodeVisitor;
@@ -15,9 +17,10 @@ import java.util.*;
 
  @author Jonathan Hedley, jonathan@hedley.net */
 public abstract class Node implements Cloneable {
-    static final String EmptyString = "";
+	static final String EmptyString = "";
     Node parentNode;
     int siblingIndex;
+	private Range range;
 
     /**
      * Default constructor. Doesn't setup base uri, children, or attributes; use with caution.
@@ -83,7 +86,7 @@ public abstract class Node implements Cloneable {
      */
     public Node attr(String attributeKey, String attributeValue) {
         attributeKey = NodeUtils.parser(this).settings().normalizeAttribute(attributeKey);
-        attributes().putIgnoreCase(attributeKey, attributeValue);
+        attributes().putIgnoreCase(attributeKey, attributeValue, -1, -1);
         return this;
     }
 
@@ -559,6 +562,14 @@ public abstract class Node implements Cloneable {
         return this;
     }
 
+    public void setRange(Range range) {
+    		this.range = range;
+    }
+    
+    public Range range() {
+    		return range;
+    }
+    
     /**
      Get the outer HTML of this node. For example, on a {@code p} element, may return {@code <p>Para</p>}.
      @return outer HTML
@@ -722,4 +733,28 @@ public abstract class Node implements Cloneable {
             }
         }
     }
+
+    public static class Range {
+    		private final int from;
+		private final int to;
+
+		public Range(int from, int to) {
+			this.from = from;
+			this.to = to;
+    		}
+
+		public int from() {
+			return from;
+		}
+
+		public int to() {
+			return to;
+		}
+		
+		@Override
+		public String toString() {
+			return from + "-" + to;
+		}
+	}
+
 }

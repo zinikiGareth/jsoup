@@ -3,6 +3,7 @@ package org.jsoup.parser;
 import org.jsoup.internal.StringUtil;
 import org.jsoup.helper.Validate;
 import org.jsoup.nodes.Entities;
+import org.jsoup.parser.Token.Tag;
 
 import java.util.Arrays;
 
@@ -73,6 +74,10 @@ final class Tokeniser {
     }
 
     void emit(Token token) {
+    		if (token instanceof Token.Tag) {
+    			Token.Tag tt = (Tag) token;
+    			System.out.println(tt.startPos + " " + tt.endPos);
+    		}
         Validate.isFalse(isEmitPending, "There is an unread token pending!");
 
         emitPending = token;
@@ -205,12 +210,12 @@ final class Tokeniser {
     }
 
     Token.Tag createTagPending(boolean start) {
-        tagPending = start ? startPending.reset() : endPending.reset();
+        tagPending = start ? startPending.reset(reader.pos()-1) : endPending.reset(reader.pos()-1);
         return tagPending;
     }
 
     void emitTagPending() {
-        tagPending.finaliseTag();
+        tagPending.finaliseTag(reader.pos());
         emit(tagPending);
     }
 
