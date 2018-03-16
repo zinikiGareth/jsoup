@@ -12,6 +12,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Entities;
 import org.jsoup.nodes.FormElement;
 import org.jsoup.nodes.Node;
+import org.jsoup.nodes.Node.Range;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
@@ -25,6 +26,8 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -37,12 +40,56 @@ public class HtmlParserTest {
     @Test public void parsesSimpleDocument() {
         String html = "<html><head><title>First!</title></head><body><p>First post! <img src=\"foo.png\" /></p></body></html>";
         Document doc = Jsoup.parse(html);
+        
+        assertNotNull(doc);
+        final Element ht = doc.children().get(0);
+		final Range htr = ht.range();
+		assertNotNull(htr);
+		assertEquals(0, htr.from());
+		assertEquals(html.length(), htr.to());
+		final Range hti = ht.innerRange();
+		assertNotNull(hti);
+		assertEquals(6, hti.from());
+		assertEquals(html.length()-7, hti.to());
+		assertEquals("<html>", html.substring(htr.from(), hti.from()));
+		assertEquals("</html>", html.substring(hti.to(), htr.to()));
+		
+		final Element hd = doc.head();
+		assertNotNull(hd);
+		final Range hdr = hd.range();
+		assertNotNull(hdr);
+		assertEquals(6, hdr.from());
+		assertEquals(40, hdr.to());
+		
+		final Range hdi = hd.innerRange();
+		assertNotNull(hdi);
+		assertEquals(12, hdi.from());
+		assertEquals(33, hdi.to());
+		assertEquals("<head>", html.substring(hdr.from(), hdi.from()));
+		assertEquals("</head>", html.substring(hdi.to(), hdr.to()));
+		
+		Element tt = hd.child(0);
+		assertEquals("<title>", html.substring(tt.range().from(), tt.innerRange().from()));
+		
         // need a better way to verify these:
-        Element p = doc.body().child(0);
+        final Element body = doc.body();
+		Element p = body.child(0);
         assertEquals("p", p.tagName());
+        
+        assertNotNull(p.range());
+        assertNotNull(p.innerRange());
+        assertEquals("<p>", html.substring(p.range().from(), p.innerRange().from())); 
+        assertEquals("</p>", html.substring(p.innerRange().to(), p.range().to())); 
+        
         Element img = p.child(0);
         assertEquals("foo.png", img.attr("src"));
         assertEquals("img", img.tagName());
+        
+        assertNotNull(body.range());
+        assertNotNull(body.innerRange());
+        assertEquals("<body>", html.substring(body.range().from(), body.innerRange().from())); 
+        assertEquals("<p>First post! <img src=\"foo.png\" /></p>", html.substring(body.innerRange().from(), body.innerRange().to())); 
+        assertEquals("</body>", html.substring(body.innerRange().to(), body.range().to())); 
     }
 
     @Test public void parsesRoughAttributes() {
@@ -146,6 +193,13 @@ public class HtmlParserTest {
         Element head = doc.head();
         Element body = doc.body();
 
+        Element meta = head.child(0);
+        assertNotNull(meta);
+        assertNotNull(meta.range());
+        assertNull(meta.innerRange());
+        assertEquals("<meta ", html.substring(meta.range().from(), meta.range().from()+6));
+        assertEquals(" />", html.substring(meta.range().to()-3, meta.range().to()));
+        
         assertEquals(1, doc.children().size()); // root node: contains html node
         assertEquals(2, doc.child(0).children().size()); // html node: head and body
         assertEquals(3, head.children().size());
@@ -491,6 +545,12 @@ public class HtmlParserTest {
         // per the spec, dt and dd are inline, but in practise are block
         String h = "<dl><dt><div id=1>Term</div></dt><dd><div id=2>Def</div></dd></dl>";
         Document doc = Jsoup.parse(h);
+        Element div = doc.selectFirst("#1");
+        assertNotNull(div);
+        assertNotNull(div.range());
+        assertNotNull(div.innerRange());
+        assertEquals("<div id=1>", h.substring(div.range().from(), div.innerRange().from()));
+        assertEquals("</div>", h.substring(div.innerRange().to(), div.range().to()));
         assertEquals("dt", doc.select("#1").first().parent().tagName());
         assertEquals("dd", doc.select("#2").first().parent().tagName());
         assertEquals("<dl><dt><div id=\"1\">Term</div></dt><dd><div id=\"2\">Def</div></dd></dl>", TextUtil.stripNewlines(doc.body().html()));

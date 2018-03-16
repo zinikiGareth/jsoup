@@ -149,7 +149,9 @@ enum HtmlTreeBuilderState {
                     Token.EndTag end = t.asEndTag();
                     name = end.normalName();
                     if (name.equals("head")) {
-                        tb.pop();
+                        Element hd = tb.pop();
+                        hd.setInnerRange(new Range(hd.range().to(), end.startPos-1));
+                        hd.setRange(new Range(hd.range().from(), end.endPos));
                         tb.transition(AfterHead);
                     } else if (StringUtil.in(name, "body", "html", "br")) {
                         return anythingElse(t, tb);
@@ -664,6 +666,9 @@ enum HtmlTreeBuilderState {
                             tb.generateImpliedEndTags();
                             if (!tb.currentElement().nodeName().equals(name))
                                 tb.error(this);
+                            Element elt = tb.getFromStack(name);
+                            elt.setInnerRange(new Range(elt.range().to(), t.asEndTag().startPos-1));
+                            elt.setRange(new Range(elt.range().from(), t.asEndTag().endPos));
                             tb.popStackToClose(name);
                         }
                     } else if (name.equals("span")) {
@@ -684,6 +689,10 @@ enum HtmlTreeBuilderState {
                             tb.error(this);
                             return false;
                         } else {
+                        		Element body = tb.getStack().get(tb.getStack().size()-1);
+                             body.setInnerRange(new Range(body.range().to(), endTag.startPos-1));
+                             body.setRange(new Range(body.range().from(), endTag.endPos));
+
                             // todo: error if stack contains something not dd, dt, li, optgroup, option, p, rp, rt, tbody, td, tfoot, th, thead, tr, body, html
                             tb.transition(AfterBody);
                         }
@@ -804,7 +813,9 @@ enum HtmlTreeBuilderState {
                 return tb.process(t);
             } else if (t.isEndTag()) {
                 // if: An end tag whose tag name is "script" -- scripting nesting level, if evaluating scripts
-                tb.pop();
+                Element e = tb.pop();
+                e.setInnerRange(new Range(e.range().to(), t.asEndTag().startPos));
+                e.setRange(new Range(e.range().from(), t.asEndTag().endPos));
                 tb.transition(tb.originalState());
             }
             return true;
@@ -1347,6 +1358,11 @@ enum HtmlTreeBuilderState {
                     tb.error(this);
                     return false;
                 } else {
+                		Element html = tb.getFromStack("html");
+                		if (html != null) {
+                			html.setInnerRange(new Range(html.range().to(), t.asEndTag().startPos-1));
+                			html.setRange(new Range(html.range().from(), t.asEndTag().endPos));
+                		}
                     tb.transition(AfterAfterBody);
                 }
             } else if (t.isEOF()) {

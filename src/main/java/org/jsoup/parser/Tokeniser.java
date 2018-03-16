@@ -74,10 +74,6 @@ final class Tokeniser {
     }
 
     void emit(Token token) {
-    		if (token instanceof Token.Tag) {
-    			Token.Tag tt = (Tag) token;
-    			System.out.println(tt.startPos + " " + tt.endPos);
-    		}
         Validate.isFalse(isEmitPending, "There is an unread token pending!");
 
         emitPending = token;
