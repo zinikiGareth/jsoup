@@ -3,7 +3,6 @@ package org.jsoup.nodes;
 import org.jsoup.SerializationException;
 import org.jsoup.internal.StringUtil;
 import org.jsoup.helper.Validate;
-import org.jsoup.nodes.Node.Range;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.NodeFilter;
 import org.jsoup.select.NodeTraversor;

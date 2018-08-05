@@ -3,7 +3,6 @@ package org.jsoup.parser;
 import org.jsoup.internal.StringUtil;
 import org.jsoup.helper.Validate;
 import org.jsoup.nodes.Entities;
-import org.jsoup.parser.Token.Tag;
 
 import java.util.Arrays;
 

@@ -1359,7 +1359,7 @@ enum HtmlTreeBuilderState {
                     return false;
                 } else {
                 		Element html = tb.getFromStack("html");
-                		if (html != null) {
+                		if (html != null && html.range() != null) {
                 			html.setInnerRange(new Range(html.range().to(), t.asEndTag().startPos-1));
                 			html.setRange(new Range(html.range().from(), t.asEndTag().endPos));
                 		}
